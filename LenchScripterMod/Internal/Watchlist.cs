@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using spaar.ModLoader;
+//using spaar.ModLoader;
 using UnityEngine;
+using Modding;
 
 namespace Lench.Scripter.Internal
 {
