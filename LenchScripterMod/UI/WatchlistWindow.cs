@@ -1,8 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Lench.Scripter.Internal;
-using spaar.ModLoader;
-using spaar.ModLoader.UI;
+using ObjectExplorerMod.UI;
 using UnityEngine;
 
 // ReSharper disable UnusedMember.Local
@@ -32,8 +31,8 @@ namespace Lench.Scripter.UI
         // ReSharper disable once ClassNeverInstantiated.Local
         private class WatchlistComponent : MonoBehaviour
         {
-            private readonly int _editWindowID = Util.GetWindowID();
-            private readonly int _mainWindowID = Util.GetWindowID();
+            private readonly int _editWindowID = Modding.ModUtility.GetWindowId();
+            private readonly int _mainWindowID = Modding.ModUtility.GetWindowId();
 
             private bool _editing;
             private VariableWatch _editingVariable;

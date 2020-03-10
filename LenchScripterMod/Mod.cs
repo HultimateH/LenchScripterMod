@@ -6,11 +6,11 @@ using System.Reflection;
 using Lench.Scripter.Internal;
 using Lench.Scripter.Resources;
 using Lench.Scripter.UI;
-using spaar.ModLoader;
 using UnityEngine;
 using Configuration = Lench.Scripter.Internal.Configuration;
 using MachineData = Lench.Scripter.Internal.MachineData;
 using Object = UnityEngine.Object;
+using Modding;
 // ReSharper disable UnusedMember.Local
 
 namespace Lench.Scripter
@@ -18,21 +18,8 @@ namespace Lench.Scripter
     /// <summary>
     ///     Mod class loaded by the Mod Loader.
     /// </summary>
-    public class Mod : spaar.ModLoader.Mod
+    public class Mod : ModEntryPoint
     {
-#pragma warning disable CS1591
-        public override string Name { get; } = "LenchScripterMod";
-        public override string DisplayName { get; } = "Lench Scripter Mod";
-        public override string Author { get; } = "Lench";
-        public override Version Version => Assembly.GetExecutingAssembly().GetName().Version;
-#if DEBUG
-        public override string VersionExtra { get; } = "debug";
-#endif
-        public override string BesiegeVersion { get; } = "v0.42";
-        public override bool CanBeUnloaded { get; } = true;
-        public override bool Preload { get; } = false;
-#pragma warning restore CS1591
-
         /// <summary>
         ///     Is LenchScripterMod Block API loaded.
         /// </summary>
@@ -44,11 +31,6 @@ namespace Lench.Scripter
         public static bool LoadedScripter { get; internal set; }
 
         /// <summary>
-        ///     Automatic update checker.
-        /// </summary>
-        public static bool UpdateCheckerEnabled { get; internal set; }
-
-        /// <summary>
         ///     Parent GameObject of all mod components.
         /// </summary>
         public static GameObject Controller { get; internal set; }
@@ -57,9 +39,9 @@ namespace Lench.Scripter
         internal static ScriptOptionsWindow ScriptOptionsWindow;
         internal static WatchlistWindow WatchlistWindow;
         internal static Toolbar Toolbar;
-        internal static SettingsButton EnableScriptButton;
-        internal static OptionsButton PythonVersion2Button;
-        internal static OptionsButton PythonVersion3Button;
+        //internal static SettingsButton EnableScriptButton;
+        //internal static OptionsButton PythonVersion2Button;
+        //internal static OptionsButton PythonVersion3Button;
 
         /// <summary>
         ///     Instantiates the mod and it's components.
@@ -67,21 +49,21 @@ namespace Lench.Scripter
         /// </summary>
         public override void OnLoad()
         {
-            Game.OnSimulationToggle += Block.OnSimulationToggle;
-            Game.OnSimulationToggle += Script.OnSimulationToggle;
-            Game.OnBlockPlaced += block => Block.FlagForIDRebuild();
-            Game.OnBlockRemoved += Block.FlagForIDRebuild;
+            Events.OnSimulationToggle += Block.OnSimulationToggle;
+            Events.OnSimulationToggle += Script.OnSimulationToggle;
+            Events.OnBlockPlaced += block => Block.FlagForIDRebuild();
+            //Events.OnBlockRemoved += Block.FlagForIDRebuild;
             Block.OnInitialisation += Script.Start;
 
             XmlSaver.OnSave += MachineData.Save;
             XmlLoader.OnLoad += MachineData.Load;
 
-            Commands.RegisterCommand("lsm", ConfigurationCommand,
-                "Scripter Mod configuration command.");
-            Commands.RegisterCommand("py", PythonCommand,
-                "Executes Python expression.");
-            Commands.RegisterCommand("python", PythonCommand,
-                "Executes Python expression.");
+            //Commands.RegisterCommand("lsm", ConfigurationCommand,
+            //    "Scripter Mod configuration command.");
+            //Commands.RegisterCommand("py", PythonCommand,
+            //    "Executes Python expression.");
+            //Commands.RegisterCommand("python", PythonCommand,
+            //    "Executes Python expression.");
 
             Controller = new GameObject("LenchScripterMod") { hideFlags = HideFlags.DontSave };
             Controller.AddComponent<ModController>();
@@ -154,66 +136,63 @@ namespace Lench.Scripter
                 }
             };
 
-            Object.DontDestroyOnLoad(DependencyInstaller.Instance);
+            //Object.DontDestroyOnLoad(DependencyInstaller.Instance);
 
             LoadedAPI = true;
 
             Configuration.Load();
 
-            EnableScriptButton = new SettingsButton
-            {
-                Text = "SCRIPT",
-                Value = Script.Enabled,
-                OnToggle = enabled =>
-                {
-                    Script.Enabled = enabled;
-                    Toolbar.Visible = enabled;
-                }
-            };
-            EnableScriptButton.Create();
+            //EnableScriptButton = new SettingsButton
+            //{
+            //    Text = "SCRIPT",
+            //    Value = Script.Enabled,
+            //    OnToggle = enabled =>
+            //    {
+            //        Script.Enabled = enabled;
+            //        Toolbar.Visible = enabled;
+            //    }
+            //};
+            //EnableScriptButton.Create();
 
-            PythonVersion2Button = new OptionsButton
-            {
-                Text = "Python 2.7",
-                Value = PythonEnvironment.Version == "ironpython2.7",
-                OnToggle = enabled =>
-                {
-                    if (enabled)
-                    {
-                        if (PythonEnvironment.Version != "ironpython3.0") return;
-                        PythonVersion3Button.Value = false;
-                        Script.SetVersionAndReload("ironpython2.7");
-                    }
-                    else
-                    {
-                        PythonVersion2Button.Value = true;
-                    }
-                }
-            };
-            PythonVersion2Button.Create();
+            //PythonVersion2Button = new OptionsButton
+            //{
+            //    Text = "Python 2.7",
+            //    Value = PythonEnvironment.Version == "ironpython2.7",
+            //    OnToggle = enabled =>
+            //    {
+            //        if (enabled)
+            //        {
+            //            if (PythonEnvironment.Version != "ironpython3.0") return;
+            //            PythonVersion3Button.Value = false;
+            //            Script.SetVersionAndReload("ironpython2.7");
+            //        }
+            //        else
+            //        {
+            //            PythonVersion2Button.Value = true;
+            //        }
+            //    }
+            //};
+            //PythonVersion2Button.Create();
 
-            PythonVersion3Button = new OptionsButton
-            {
-                Text = "Python 3.0",
-                Value = PythonEnvironment.Version == "ironpython3.0",
-                OnToggle = enabled =>
-                {
-                    if (enabled)
-                    {
-                        if (PythonEnvironment.Version != "ironpython2.7") return;
-                        PythonVersion2Button.Value = false;
-                        Script.SetVersionAndReload("ironpython3.0");
-                    }
-                    else
-                    {
-                        PythonVersion3Button.Value = true;
-                    }
-                }
-            };
-            PythonVersion3Button.Create();
-            
-            if (UpdateCheckerEnabled)
-                CheckForModUpdate();
+            //PythonVersion3Button = new OptionsButton
+            //{
+            //    Text = "Python 3.0",
+            //    Value = PythonEnvironment.Version == "ironpython3.0",
+            //    OnToggle = enabled =>
+            //    {
+            //        if (enabled)
+            //        {
+            //            if (PythonEnvironment.Version != "ironpython2.7") return;
+            //            PythonVersion2Button.Value = false;
+            //            Script.SetVersionAndReload("ironpython3.0");
+            //        }
+            //        else
+            //        {
+            //            PythonVersion3Button.Value = true;
+            //        }
+            //    }
+            //};
+            //PythonVersion3Button.Create();
         }
 
         private static void OpenIdentifier()
@@ -249,28 +228,6 @@ namespace Lench.Scripter
             ScriptOptionsWindow.Visible = true;
         }
 
-        /// <summary>
-        ///     Disables the mod from executing scripts.
-        ///     Destroys GameObjects.
-        /// </summary>
-        public override void OnUnload()
-        {
-            Configuration.Save();
-
-            Game.OnSimulationToggle -= Block.OnSimulationToggle;
-            Game.OnSimulationToggle -= Script.OnSimulationToggle;
-            Game.OnBlockRemoved -= Block.FlagForIDRebuild;
-            Block.OnInitialisation -= Script.Start;
-
-            XmlSaver.OnSave -= MachineData.Save;
-            XmlLoader.OnLoad -= MachineData.Load;
-
-            LoadedScripter = false;
-            LoadedAPI = false;
-
-            Object.Destroy(Controller);
-        }
-
         internal class ModController : MonoBehaviour
         {
             private void Start()
@@ -280,15 +237,15 @@ namespace Lench.Scripter
                 Debug.Log("[LenchScripterMod]: Additional assets required.\n" +
                           "\tFiles will be placed in Mods/Resources/LenchScripter.\n" +
                           "\tType `lsm python 2.7` or `lsm python 3.0` to download them.");
-                DependencyInstaller.Visible = true;
+                //DependencyInstaller.Visible = true;
             }
 
             private void Update()
             {
                 if (Toolbar != null)
                     Toolbar.Visible = !StatMaster.inMenu &&
-                                      !StatMaster.isSimulating &&
-                                       Game.AddPiece != null;
+                                      !Game.IsSimulating &&
+                                      AddPiece.Instance != null;
             }
         }
 
@@ -334,24 +291,6 @@ namespace Lench.Scripter
                        "  lsm python 3.0       \t Switches to IronPython 3.0.\n";
             switch (args[0].ToLower())
             {
-                case "modupdate":
-                    if (args.Length > 1)
-                        switch (args[1].ToLower())
-                        {
-                            case "check":
-                                CheckForModUpdate(true);
-                                return "Checking for mod updates ...";
-                            case "enable":
-                                UpdateCheckerEnabled = true;
-                                return "Mod update checker enabled.";
-                            case "disable":
-                                UpdateCheckerEnabled = false;
-                                return "Mod update checker disabled.";
-                            default:
-                                return
-                                    "Invalid argument [check/enable/disable]. Enter 'lsm' for all available commands.";
-                        }
-                    return "Missing argument [check/enable/disable]. Enter 'lsm' for all available commands.";
                 case "python":
                     if (args.Length > 1)
                         switch (args[1].ToLower())
@@ -371,32 +310,6 @@ namespace Lench.Scripter
                 default:
                     return "Invalid command. Enter 'lsm' for all available commands.";
             }
-        }
-
-        /// <summary>
-        ///     Checks for mod update.
-        /// </summary>
-        /// <param name="verbose">Log status into console.</param>
-        public static void CheckForModUpdate(bool verbose = false)
-        {
-            Updater.Check(
-                "Lench Scripter Mod",
-                "https://api.github.com/repos/lench4991/LenchScripterMod/releases/latest",
-                Assembly.GetExecutingAssembly().GetName().Version,
-                new List<Updater.Link>
-                {
-                    new Updater.Link
-                    {
-                        DisplayName = "Spiderling forum page",
-                        URL = "http://forum.spiderlinggames.co.uk/index.php?threads/3003/"
-                    },
-                    new Updater.Link
-                    {
-                        DisplayName = "GitHub release page",
-                        URL = "https://github.com/lench4991/LenchScripterMod/releases/latest"
-                    }
-                },
-                verbose);
         }
     }
 }

@@ -1,8 +1,7 @@
 ﻿using System;
 using System.IO;
 using Lench.Scripter.Internal;
-using spaar.ModLoader;
-using spaar.ModLoader.UI;
+using ObjectExplorerMod.UI;
 using UnityEngine;
 // ReSharper disable UnusedMember.Local
 // ReSharper disable PossibleLossOfFraction
@@ -53,7 +52,7 @@ namespace Lench.Scripter.UI
             public ScriptOptionsWindow Handler;
 
             private bool _init;
-            private readonly int _windowID = Util.GetWindowID();
+            private readonly int _windowID = Modding.ModUtility.GetWindowId();
             private Rect _windowRect;
 
             private void OnGUI()

@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using static spaar.ModLoader.Configuration;
 
 namespace Lench.Scripter.Internal
 {
@@ -7,7 +6,6 @@ namespace Lench.Scripter.Internal
     {
         internal static void Load()
         {
-            Mod.UpdateCheckerEnabled = GetBool("mod-updater-enabled", true);
             Script.Enabled = GetBool("script-enabled", true);
 
             Mod.WatchlistWindow.Position = new Vector2
@@ -32,10 +30,10 @@ namespace Lench.Scripter.Internal
 
             PythonEnvironment.Version = GetString("PythonVersion", "ironpython2.7");
         }
-
+        
         internal static void Save()
         {
-            SetBool("mod-updater-enabled", Mod.UpdateCheckerEnabled);
+            //SetBool("mod-updater-enabled", Mod.UpdateCheckerEnabled);
             SetBool("script-enabled", Script.Enabled);
 
             SetFloat("WatchlistXPos", Mod.WatchlistWindow.Position.x);
@@ -51,7 +49,7 @@ namespace Lench.Scripter.Internal
 
             SetString("PythonVersion", PythonEnvironment.Version);
 
-            spaar.ModLoader.Configuration.Save();
+            Modding.Configuration.Save();
         }
     }
 }

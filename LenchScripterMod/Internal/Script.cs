@@ -2,8 +2,9 @@
 using System.IO;
 using System.Linq;
 using JetBrains.Annotations;
-using spaar.ModLoader;
+//using spaar.ModLoader;
 using UnityEngine;
+using Modding;
 #pragma warning disable 649
 
 // ReSharper disable UnusedMember.Local
@@ -46,7 +47,7 @@ namespace Lench.Scripter.Internal
             {
                 _enabled = value;
                 if (!Mod.LoadedScripter) return;
-                if (StatMaster.isSimulating && Block.Initialised && value)
+                if (Game.IsSimulating && Block.Initialised && value)
                     Start();
                 else
                     Stop();
@@ -98,7 +99,7 @@ namespace Lench.Scripter.Internal
             if (LoadEngine(true)) return;
 
             PythonEnvironment.DestroyEngine();
-            DependencyInstaller.InstallIronPython();
+            //DependencyInstaller.InstallIronPython();
         }
 
         /// <summary>

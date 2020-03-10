@@ -1,6 +1,6 @@
-﻿using spaar.ModLoader;
-using spaar.ModLoader.UI;
+﻿using ObjectExplorerMod.UI;
 using UnityEngine;
+using Modding;
 // ReSharper disable PossibleLossOfFraction
 // ReSharper disable UnusedMember.Local
 // ReSharper disable ArrangeThisQualifier
@@ -9,7 +9,7 @@ namespace Lench.Scripter.UI
 {
     internal class IdentifierDisplayWindow
     {
-        public GenericBlock Block;
+        public /*GenericBlock*/BlockBehaviour Block;
 
         public bool Visible { get; set; }
 
@@ -34,13 +34,13 @@ namespace Lench.Scripter.UI
 
             private bool _init;
 
-            private readonly int _windowID = Util.GetWindowID();
+            private readonly int _windowID = Modding.ModUtility.GetWindowId();
             private Rect _windowRect;
 
             private void OnGUI()
             {
                 if (!Elements.IsInitialized ||
-                    StatMaster.isSimulating ||
+                     Game.IsSimulating ||
                     Handler == null ||
                     !Handler.Visible) return;
 
@@ -57,10 +57,10 @@ namespace Lench.Scripter.UI
             private void Update()
             {
                 if (Input.GetKeyDown(KeyCode.LeftShift) &&
-                    Game.AddPiece != null &&
-                    Game.AddPiece.HoveredBlock != null)
+                    AddPiece.Instance != null &&
+                    AddPiece.Instance.HoveredBlock != null)
                 {
-                    Handler.Block = Game.AddPiece.HoveredBlock;
+                    Handler.Block = AddPiece.Instance.HoveredBlock;
                 }
             }
 

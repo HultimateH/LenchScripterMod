@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Modding;
 // ReSharper disable SpecifyStringComparison
 
 namespace Lench.Scripter
@@ -46,7 +47,7 @@ namespace Lench.Scripter
         /// <summary>
         ///     Type of the block.
         /// </summary>
-        public BlockType BlockType => (BlockType) Bb.GetBlockID();
+        public BlockType BlockType => (BlockType) Bb.BlockID;
 
         /// <summary>
         ///     Returns true if the block has RigidBody.
@@ -327,8 +328,8 @@ namespace Lench.Scripter
             foreach (var m in Bb.Keys)
                 if (m.DisplayName.ToUpper() == keyName.ToUpper())
                 {
-                    for (var i = 0; i < m.KeyCode.Count; i++)
-                        if (m.KeyCode[i] == KeyCode.None)
+                    for (var i = 0; i < m./*KeyCode.Count*/KeysCount; i++)
+                        if (m./*KeyCode[i]*/GetKey(i) == KeyCode.None)
                         {
                             m.AddOrReplaceKey(i, key);
                             return;
@@ -361,7 +362,7 @@ namespace Lench.Scripter
         {
             foreach (var m in Bb.Keys)
                 if (m.DisplayName.ToUpper() == keyName.ToUpper())
-                    return m.KeyCode[0];
+                    return m./*KeyCode[0]*/GetKey(0);
             throw new PropertyNotFoundException("Key " + keyName + " not found.");
         }
 
@@ -374,7 +375,7 @@ namespace Lench.Scripter
             foreach (var m in Bb.Keys)
                 if (m.DisplayName.ToUpper() == keyName.ToUpper())
                 {
-                    for (var i = 0; i < m.KeyCode.Count; i++)
+                    for (var i = 0; i < m./*KeyCode.Count*/KeysCount; i++)
                         m.AddOrReplaceKey(i, KeyCode.None);
                     return;
                 }

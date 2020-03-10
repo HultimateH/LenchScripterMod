@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using spaar.ModLoader;
-using spaar.ModLoader.UI;
+using ObjectExplorerMod.UI;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -134,7 +133,7 @@ namespace Lench.Scripter.UI
 
             private const float XPos = -8;
 
-            private readonly int _windowID = Util.GetWindowID();
+            private readonly int _windowID = Modding.ModUtility.GetWindowId();
             private Rect _windowRect;
             private bool _expanded;
             private bool _animating;

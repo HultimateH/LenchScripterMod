@@ -5,6 +5,9 @@ using System.Linq;
 using Lench.Scripter.Blocks;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using Modding;
+using Modding.Blocks;
+
 
 // ReSharper disable UnusedMember.Local
 // ReSharper disable PossibleNullReferenceException
@@ -82,7 +85,7 @@ namespace Lench.Scripter
             private void Update()
             {
                 // Initialize block identifiers
-                if (!StatMaster.isSimulating && _rebuildIDs)
+                if (!Game.IsSimulating && _rebuildIDs)
                 {
                     InitializeIDs();
                 }
@@ -110,8 +113,8 @@ namespace Lench.Scripter
         private static Block Create(BlockBehaviour bb)
         {
             Block block;
-            if (Types.ContainsKey(bb.GetBlockID()))
-                block = (Block) Activator.CreateInstance(Types[bb.GetBlockID()], new object[] {bb});
+            if (Types.ContainsKey(bb.BlockID))
+                block = (Block) Activator.CreateInstance(Types[bb.BlockID], new object[] {bb});
             else
                 block = new Block(bb);
             BbToBlockHandler[bb] = block;
@@ -162,7 +165,7 @@ namespace Lench.Scripter
         /// </summary>
         /// <param name="block">Block object.</param>
         /// <returns></returns>
-        public static string GetID(GenericBlock block)
+        public static string GetID(/*GenericBlock*/BlockBehaviour block)
         {
             if (BuildingBlocks == null || !BuildingBlocks.ContainsKey(block.Guid))
                 InitializeIDs();
@@ -197,9 +200,9 @@ namespace Lench.Scripter
         {
             var typeCount = new Dictionary<string, int>();
             BuildingBlocks = new Dictionary<Guid, string>();
-            foreach (var t in ReferenceMaster.BuildingBlocks)
+            foreach (var t in /*ReferenceMaster*/Machine.Active().BuildingBlocks)
             {
-                var block = t.GetComponent<GenericBlock>();
+                var block = t.GetComponent</*GenericBlock*/BlockBehaviour>();
                 var name = t.GetComponent<MyBlockInfo>().blockName.ToUpper();
                 typeCount[name] = typeCount.ContainsKey(name) ? typeCount[name] + 1 : 1;
                 BuildingBlocks[block.Guid] = name + " " + typeCount[name];
@@ -219,13 +222,13 @@ namespace Lench.Scripter
             GUIDToBlockHandler = new Dictionary<Guid, Block>();
             BbToBlockHandler = new Dictionary<BlockBehaviour, Block>();
             var typeCount = new Dictionary<string, int>();
-            for (var i = 0; i < ReferenceMaster.BuildingBlocks.Count; i++)
+            for (var i = 0; i < /*ReferenceMaster*/Machine.Active().BuildingBlocks.Count; i++)
             {
-                var name = ReferenceMaster.BuildingBlocks[i].GetComponent<MyBlockInfo>().blockName.ToUpper();
+                var name = /*ReferenceMaster*/Machine.Active().BuildingBlocks[i].GetComponent<MyBlockInfo>().blockName.ToUpper();
                 typeCount[name] = typeCount.ContainsKey(name) ? typeCount[name] + 1 : 1;
                 var id = name + " " + typeCount[name];
-                var guid = ReferenceMaster.BuildingBlocks[i].Guid;
-                var b = Create(ReferenceMaster.SimulationBlocks[i]);
+                var guid = /*ReferenceMaster*/Machine.Active().BuildingBlocks[i].Guid;
+                var b = Create(/*ReferenceMaster*/Machine.Active().SimulationBlocks[i]);
                 IDToBlockHandler[id] = b;
                 GUIDToBlockHandler[guid] = b;
             }
@@ -236,7 +239,7 @@ namespace Lench.Scripter
 
         private static IEnumerator WaitAndInitialize()
         {
-            while (!StatMaster.isSimulating || ReferenceMaster.SimulationBlocks.Count < ReferenceMaster.BuildingBlocks.Count)
+            while (!Game.IsSimulating || ReferenceMaster.SimulationBlocks.Count < ReferenceMaster.BuildingBlocks.Count)
                 yield return null;
             Initialize();
         }
@@ -275,7 +278,7 @@ namespace Lench.Scripter
         /// <param name="blockHandler">Type of your Block handler.</param>
         public static void MapTypeToID(int blockType, Type blockHandler)
         {
-            if (!blockHandler.IsSubclassOf(typeof(global::Block)))
+            if (!blockHandler.IsSubclassOf(typeof(global::/*Block*/Lench.Scripter.Block)))
                 throw new ArgumentException(blockHandler + " is not a subclass of Block.");
             if (Types.ContainsKey(blockType))
                 Types[blockType] = blockHandler;

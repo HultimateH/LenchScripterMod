@@ -32,7 +32,7 @@ namespace Lench.Scripter
         {
             get
             {
-                var center = Machine.Active().Blocks
+                var center = Machine.Active().BuildingBlocks
                     .Select(bb => bb.GetComponent<Rigidbody>())
                     .Where(body => body != null)
                     .Aggregate(Vector3.zero, (current, body) => current + body.worldCenterOfMass * body.mass);
