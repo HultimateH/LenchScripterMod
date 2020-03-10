@@ -1,42 +1,54 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Reflection;
 
-namespace LenchScripter.Internal
+namespace Lench.Scripter.Internal
 {
     internal static class MachineData
-    { 
+    {
+        public static event Action<string> OnLoadSuccess;
+        public static event Action<string> OnLoadWarning;
+        public static event Action<string> OnSaveSuccess;
+        public static event Action<string> OnSaveWarning;
 
-        internal static void Load(MachineInfo machineInfo)
+        public static void Load(MachineInfo machineInfo)
         {
-            Scripter.Instance.ScriptOptions.ScriptName = machineInfo.Name;
-            if (!machineInfo.MachineData.HasKey("LenchScripterMod-Version")) return;
-            var version = machineInfo.MachineData.ReadString("LenchScripterMod-Version");
-            var code = machineInfo.MachineData.ReadString("LenchScripterMod-Code");
-            Scripter.Instance.ScriptOptions.Code = code;
-            Scripter.Instance.ScriptOptions.BsgHasCode = true;
-            Scripter.Instance.ScriptOptions.SuccessMessage = "Successfully loaded code from .bsg.";
-            Scripter.Instance.ScriptOptions.CheckForScript();
-        }
-
-        internal static void Save(MachineInfo machineInfo)
-        {
-            Scripter.Instance.ScriptOptions.ScriptName = machineInfo.Name;
-            Scripter.Instance.ScriptOptions.CheckForScript();
-            if (Scripter.Instance.ScriptOptions.SaveToBsg)
+            Script.FileName = machineInfo.Name;
+            if (!machineInfo.MachineData.HasKey("LenchScripterMod-Version"))
             {
-                Scripter.Instance.ScriptOptions.CheckForScript();
-                var code = File.ReadAllText(Scripter.Instance.ScriptOptions.ScriptPath);
-                machineInfo.MachineData.Write("LenchScripterMod-Version", "v2.0.0");
-                machineInfo.MachineData.Write("LenchScripterMod-Code", code);
-                Scripter.Instance.ScriptOptions.Code = code;
-                Scripter.Instance.ScriptOptions.BsgHasCode = true;
-                Scripter.Instance.ScriptOptions.SuccessMessage = "Successfully saved code to .bsg.";
-                Scripter.Instance.ScriptOptions.NoteMessage = null;
+                Script.EmbeddedCode = null;
+                OnLoadWarning?.Invoke("No embedded code found.");
             }
             else
             {
-                Scripter.Instance.ScriptOptions.SuccessMessage = null;
-                if (Scripter.Instance.ScriptOptions.Code != null)
-                    Scripter.Instance.ScriptOptions.NoteMessage = "Code has not been saved to .bsg file.";
+                var version = new Version(machineInfo.MachineData.ReadString("LenchScripterMod-Version").TrimStart('v'));
+                if (version > Assembly.GetExecutingAssembly().GetName().Version)
+                    OnLoadWarning?.Invoke($"Loaded code is from a newer version v{version}.\nSome features might be incompatible.");
+                if (new Version(2, 0, 0) > version)
+                    OnLoadWarning?.Invoke($"Loaded code is from version v{version}.\nLua code is no longer supported.");
+                var code = machineInfo.MachineData.ReadString("LenchScripterMod-Code");
+                Script.EmbeddedCode = code;
+                OnLoadSuccess?.Invoke("Successfully loaded embedded code.");
+            }
+
+            Script.SetSource();
+        }
+
+        public static void Save(MachineInfo machineInfo)
+        {
+            if (Script.SaveToBsg)
+            {
+                var code = File.ReadAllText(Script.FilePath);
+                machineInfo.MachineData.Write("LenchScripterMod-Version",
+                    Assembly.GetExecutingAssembly().GetName().Version.ToString());
+                machineInfo.MachineData.Write("LenchScripterMod-Code", code);
+                Script.EmbeddedCode = code;
+                OnSaveSuccess?.Invoke("Successfully embedded code.");
+            }
+            else
+            {
+                if (Script.EmbeddedCode != null)
+                    OnSaveWarning?.Invoke("Embedded code has not been updated.");
             }
         }
     }

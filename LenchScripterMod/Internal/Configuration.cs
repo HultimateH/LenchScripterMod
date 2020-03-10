@@ -1,34 +1,55 @@
 ﻿using UnityEngine;
+using static spaar.ModLoader.Configuration;
 
-namespace LenchScripter.Internal
+namespace Lench.Scripter.Internal
 {
     internal static class Configuration
     {
         internal static void Load()
         {
-            Scripter.Instance.Watchlist.ConfigurationPosition = new Vector2();
-            Scripter.Instance.Watchlist.ConfigurationPosition.x = spaar.ModLoader.Configuration.GetFloat("WatchlistXPos", -380);
-            Scripter.Instance.Watchlist.ConfigurationPosition.y = spaar.ModLoader.Configuration.GetFloat("WatchlistYPos", 200);
+            Mod.UpdateCheckerEnabled = GetBool("mod-updater-enabled", true);
+            Script.Enabled = GetBool("script-enabled", true);
 
-            Scripter.Instance.IdentifierDisplay.ConfigurationPosition = new Vector2();
-            Scripter.Instance.IdentifierDisplay.ConfigurationPosition.x = spaar.ModLoader.Configuration.GetFloat("IdentifierDisplayXPos", 900);
-            Scripter.Instance.IdentifierDisplay.ConfigurationPosition.y = spaar.ModLoader.Configuration.GetFloat("IdentifierDisplayYPos", -240);
+            Mod.WatchlistWindow.Position = new Vector2
+            {
+                x = GetFloat("WatchlistXPos", -380),
+                y = GetFloat("WatchlistYPos", 200)
+            };
 
-            Scripter.Instance.ScriptOptions.ConfigurationPosition = new Vector2();
-            Scripter.Instance.ScriptOptions.ConfigurationPosition.x = spaar.ModLoader.Configuration.GetFloat("ScriptOptionsXPos", -380);
-            Scripter.Instance.ScriptOptions.ConfigurationPosition.y = spaar.ModLoader.Configuration.GetFloat("ScriptOptionsYPos", -400);
+            Mod.IdentifierDisplayWindow.Position = new Vector2
+            {
+                x = GetFloat("IdentifierDisplayXPos", 900),
+                y = GetFloat("IdentifierDisplayYPos", -240)
+            };
+
+            Mod.ScriptOptionsWindow.Position = new Vector2
+            {
+                x = GetFloat("ScriptOptionsXPos", -380),
+                y = GetFloat("ScriptOptionsYPos", -400)
+            };
+
+            Mod.Toolbar.Position = GetFloat("ToolbarPos", 400);
+
+            PythonEnvironment.Version = GetString("PythonVersion", "ironpython2.7");
         }
 
         internal static void Save()
         {
-            spaar.ModLoader.Configuration.SetFloat("WatchlistXPos", Scripter.Instance.Watchlist.ConfigurationPosition.x);
-            spaar.ModLoader.Configuration.SetFloat("WatchlistYPos", Scripter.Instance.Watchlist.ConfigurationPosition.y);
+            SetBool("mod-updater-enabled", Mod.UpdateCheckerEnabled);
+            SetBool("script-enabled", Script.Enabled);
 
-            spaar.ModLoader.Configuration.SetFloat("IdentifierDisplayXPos", Scripter.Instance.IdentifierDisplay.ConfigurationPosition.x);
-            spaar.ModLoader.Configuration.SetFloat("IdentifierDisplayYPos", Scripter.Instance.IdentifierDisplay.ConfigurationPosition.y);
+            SetFloat("WatchlistXPos", Mod.WatchlistWindow.Position.x);
+            SetFloat("WatchlistYPos", Mod.WatchlistWindow.Position.y);
 
-            spaar.ModLoader.Configuration.SetFloat("ScriptOptionsXPos", Scripter.Instance.ScriptOptions.ConfigurationPosition.x);
-            spaar.ModLoader.Configuration.SetFloat("ScriptOptionsYPos", Scripter.Instance.ScriptOptions.ConfigurationPosition.y);
+            SetFloat("IdentifierDisplayXPos", Mod.IdentifierDisplayWindow.Position.x);
+            SetFloat("IdentifierDisplayYPos", Mod.IdentifierDisplayWindow.Position.y);
+
+            SetFloat("ScriptOptionsXPos", Mod.ScriptOptionsWindow.Position.x);
+            SetFloat("ScriptOptionsYPos", Mod.ScriptOptionsWindow.Position.y);
+
+            SetFloat("ToolbarPos", Mod.Toolbar.Position);
+
+            SetString("PythonVersion", PythonEnvironment.Version);
 
             spaar.ModLoader.Configuration.Save();
         }

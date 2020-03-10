@@ -1,199 +1,276 @@
-﻿using LenchScripter.Internal;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using JetBrains.Annotations;
 using UnityEngine;
 
-namespace LenchScripter
+// ReSharper disable UseMethodAny.2
+// ReSharper disable PossibleNullReferenceException
+
+namespace Lench.Scripter
 {
     /// <summary>
-    /// Class handling Python environment.
+    ///     Class handling Python environment.
     /// </summary>
     public class PythonEnvironment
     {
-        internal static Assembly ironPythonAssembly;
-        internal static Assembly microsoftScriptingAssembly;
+        internal static Assembly IronPythonAssembly;
+        internal static Assembly MicrosoftScriptingAssembly;
+        internal static Assembly MicrosoftDynamicAssembly;
 
-        private static Type python;
-        private static Type scriptEngine;
-        private static Type scriptScope;
-        private static Type scriptRuntime;
-        private static Type scriptSource;
-        private static Type compiledCode;
-        private static Type exceptionOperations;
-        private static MethodInfo executeMethod;
-        private static MethodInfo getVariableMethod;
-        private static MethodInfo setVariableMethod;
-        private static MethodInfo containsVariableMethod;
+        private static string _version = "ironpython2.7";
+
+        private static Type _python;
+        private static Type _scriptEngine;
+        private static Type _scriptScope;
+        private static Type _scriptRuntime;
+        private static Type _scriptSource;
+        private static Type _compiledCode;
+        private static Type _exceptionOperations;
+        private static MethodInfo _executeMethod;
+        private static MethodInfo _getVariableMethod;
+        private static MethodInfo _setVariableMethod;
+        private static MethodInfo _containsVariableMethod;
 
         private static object _eo;
-        private static object _engine;
-        private object scope;
+        private readonly object _scope;
 
-        private Action update;
-        private Action fixedupdate;
-
-        private Exception exception;
+        internal static object Engine;
 
         /// <summary>
-        /// Are Python assemblies loaded and engine ready to be initialised.
+        ///     Creates a new Python Environment and sets up the scope.
         /// </summary>
-        public static bool Loaded { get { return !(ironPythonAssembly == null || microsoftScriptingAssembly == null); } }
-
-        /// <summary>
-        /// Is script enabled to be ran on simulation start.
-        /// </summary>
-        public static bool Enabled { get { return Scripter.Instance.enableScript; } }
-
-        /// <summary>
-        /// Returns PythonEnvironment instance currently used by the scripting mod.
-        /// Only instantiated during simulation.
-        /// </summary>
-        public static PythonEnvironment ScripterEnvironment
-        {
-            get { return Scripter.Instance.python; }
-        }
-
-        /// <summary>
-        /// Returns last occured exception.
-        /// </summary>
-        public Exception LastException
-        {
-            get { return exception.InnerException == null ? exception : exception.InnerException; }
-        }
-
-        /// <summary>
-        /// Returns last occured exception in Python format.
-        /// </summary>
-        /// <returns></returns>
-        public static string FormatException(Exception e)
-        {
-            if (_engine == null)
-                throw new InvalidOperationException("Python engine not initialised.");
-            if (_eo == null)
-                _eo = scriptEngine.GetMethods()
-                    .Single(method =>
-                        method.Name == "GetService" &&
-                        method.IsGenericMethodDefinition)
-                    .GetGenericMethodDefinition()
-                    .MakeGenericMethod(exceptionOperations)
-                    .Invoke(_engine, new object[] { null });
-            return (string)exceptionOperations.GetMethod("FormatException", new[] { typeof(Exception) }).Invoke(_eo, new[] { e });
-        }
-
-        /// <summary>
-        /// Initializes IronPython engine.
-        /// </summary>
-        public static void InitializeEngine()
-        {
-            if (ironPythonAssembly == null || microsoftScriptingAssembly == null)
-                throw new InvalidOperationException("IronPython assemblies not loaded. Script engine not available.");
-
-            python = ironPythonAssembly.GetType("IronPython.Hosting.Python");
-            scriptEngine = microsoftScriptingAssembly.GetType("Microsoft.Scripting.Hosting.ScriptEngine");
-            scriptScope = microsoftScriptingAssembly.GetType("Microsoft.Scripting.Hosting.ScriptScope");
-            scriptRuntime = microsoftScriptingAssembly.GetType("Microsoft.Scripting.Hosting.ScriptRuntime");
-            scriptSource = microsoftScriptingAssembly.GetType("Microsoft.Scripting.Hosting.ScriptSource");
-            compiledCode = microsoftScriptingAssembly.GetType("Microsoft.Scripting.Hosting.CompiledCode");
-            exceptionOperations = microsoftScriptingAssembly.GetType("Microsoft.Scripting.Hosting.ExceptionOperations");
-
-            executeMethod = scriptEngine.GetMethods()
-                .Single(method => 
-                    method.Name == "Execute" && !method.IsGenericMethod &&
-                    method.GetParameters().Count() == 2 &&
-                    method.GetParameters()[0].ParameterType == typeof(string) &&
-                    method.GetParameters()[1].ParameterType == scriptScope);
-            getVariableMethod = scriptScope.GetMethod("GetVariable", new[] { typeof(string) });
-            setVariableMethod = scriptScope.GetMethod("SetVariable", new[] { typeof(string), typeof(object) });
-            containsVariableMethod = scriptScope.GetMethod("ContainsVariable", new[] { typeof(string) });
-            
-            _engine = python.GetMethods()
-                .Single(method => 
-                        method.Name == "CreateEngine" &&
-                        method.GetParameters().Count() == 0)
-                .Invoke(null, null);
-
-            // Add search path
-            var paths = scriptEngine.GetMethod("GetSearchPaths").Invoke(_engine, null) as ICollection<string>;
-            paths.Add(Application.dataPath + "/Scripts/");
-            scriptEngine.GetMethod("SetSearchPaths").Invoke(_engine, new [] {paths});
-        }
-
-        /// <summary>
-        /// Destroys IronPython engine.
-        /// </summary>
-        public static void DestroyEngine()
-        {
-            if (_engine != null)
-            {
-                var runtime = scriptEngine.GetProperty("Runtime").GetValue(_engine, null);
-                scriptRuntime.GetMethod("Shutdown").Invoke(runtime, null);
-            }
-            _engine = null;
-            _eo = null;
-        }
-
-        /// <summary>
-        /// Creates a new Python Environment and sets up the scope.
-        /// </summary>
-        public PythonEnvironment()
+        public PythonEnvironment(object scope = null, bool redirectOutput = true)
         {
             // Initialize engine
-            if (_engine == null)
+            if (Engine == null)
                 InitializeEngine();
 
             // Initialize scope
-            scope = scriptEngine.GetMethods()
-                .Single(method => 
-                    method.Name == "CreateScope" &&
-                    method.GetParameters().Count() == 0)
-                .Invoke(_engine, null);
+            if (scope == null)
+            {
+                _scope = _scriptEngine.GetMethods()
+                    .Single(method =>
+                        method.Name == "CreateScope" &&
+                        method.GetParameters().Count() == 0)
+                    .Invoke(Engine, null);
+            }
+            else
+            {
+                _scope = scope;
+            }
 
             // Set up environment
+            Execute("import sys");
+            Execute("sys.modules.clear()");
             Execute("import clr");
             Execute("clr.AddReference(\"System\")");
             Execute("clr.AddReference(\"UnityEngine\")");
             Execute("from UnityEngine import Vector2, Vector3, Vector4, Mathf, Time, Input, KeyCode, Color");
+
             Execute("clr.AddReference(\"LenchScripterMod\")");
-            Execute("from LenchScripter import Functions as Besiege");
-            Execute("from __future__ import division");
+            Execute("from Lench.Scripter import Functions as Besiege");
 
             // Redirect standard output
-            Execute("import sys");
-            SetVariable("pythonenv", this);
-            Execute("sys.stdout = pythonenv");
-            SetVariable("pythonenv", null);
+            if (redirectOutput)
+            {
+                this["pythonenv"] = this;
+                Execute("sys.stdout = pythonenv");
+                Execute("del pythonenv");
+            }
+
+            OnInitialization?.Invoke(this);
         }
 
         /// <summary>
-        /// Returns true if the scope contains variable with name.
+        ///     Invoked on scope creation. Use this to import modules into default script scope.
+        ///     Called for every PythonEnvironment instance. PythonEnvironment is passed to the delegate as an argument.
         /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public bool ContainsVariable(string name)
+        public static event Action<PythonEnvironment> OnInitialization;
+
+        /// <summary>
+        ///     Wrapper for `OnInitialization += python => python.Execute(expression);` to simplify reflection calls.
+        /// </summary>
+        /// <param name="expression">Python expression.</param>
+        [Obsolete("If you see this, you should probably be using the OnInitialization event instead.")]
+        public static void AddInitStatement([NotNull] string expression)
         {
-            return (bool)containsVariableMethod.Invoke(scope, new [] { name });
+            if (expression == null) throw new ArgumentNullException(nameof(expression));
+            OnInitialization += python =>
+            {
+                try
+                {
+                    python.Execute(expression);
+                }
+                catch (Exception e)
+                {
+                    Debug.Log($"<b><color=#FF0000>Python error during initialization statement:\n{e.Message}</color></b>\n{FormatException(e)}");
+                }
+            };
         }
 
         /// <summary>
-        /// Returns variable with given name.
+        ///     Currently selected ironpython version. Can only be "ironpython2.7" or "ironpython3.0".
+        ///     Engine needs to be reloaded after changing this.
         /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public object GetVariable(string name)
+        public static string Version
         {
-            return getVariableMethod.Invoke(scope, new [] { name });
+            get { return _version; }
+            set
+            {
+                if (value != "ironpython2.7" && value != "ironpython3.0")
+                    throw new Exception("Invalid Python version. Supported values are 'ironpython2.7' and 'ironpython3.0'.");
+
+                _version = value;
+            }
         }
 
         /// <summary>
-        /// Returns variable with given name of type T.
+        ///     Points to the directory where IronPython assemblies are located.
+        /// </summary>
+        public static string LibPath => $"{Application.dataPath}/Mods/Resources/LenchScripter/lib/{Version}/";
+
+        /// <summary>
+        ///     Are Python assemblies loaded and engine ready to be initialised.
+        /// </summary>
+        public static bool Loaded =>
+            IronPythonAssembly != null &&
+            MicrosoftScriptingAssembly != null &&
+            MicrosoftDynamicAssembly != null;
+
+        /// <summary>
+        ///     Is script enabled to be ran on simulation start.
+        /// </summary>
+        public static bool Enabled { get; set; }
+
+        /// <summary>
+        ///     Loads Python assemblies.
+        /// </summary>
+        /// <returns>Returns true if successfull.</returns>
+        public static bool LoadPythonAssembly()
+        {
+            try
+            {
+                IronPythonAssembly = Assembly.LoadFile(LibPath + "IronPython.dll");
+                MicrosoftScriptingAssembly = Assembly.LoadFile(LibPath + "Microsoft.Scripting.dll");
+                MicrosoftDynamicAssembly = Assembly.LoadFile(LibPath + "Microsoft.Dynamic.dll");
+                Assembly.LoadFile(LibPath + "IronPython.Modules.dll");
+                Assembly.LoadFile(LibPath + "Microsoft.Scripting.Core.dll");
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        ///     Returns last occured exception in Python format.
+        /// </summary>
+        /// <returns></returns>
+        public static string FormatException(Exception e)
+        {
+            if (Engine == null)
+                throw new InvalidOperationException("Python engine not initialised.");
+            if (_eo == null)
+                _eo = _scriptEngine.GetMethods()
+                    .Single(method =>
+                        method.Name == "GetService" &&
+                        method.IsGenericMethodDefinition)
+                    .GetGenericMethodDefinition()
+                    .MakeGenericMethod(_exceptionOperations)
+                    .Invoke(Engine, new object[] {null});
+            if (e.InnerException != null)
+                e = e.InnerException;
+            return
+                (string)
+                _exceptionOperations.GetMethod("FormatException", new[] {typeof(Exception)})
+                    .Invoke(_eo, new object[] {e});
+        }
+
+        /// <summary>
+        ///     Initializes IronPython engine.
+        /// </summary>
+        public static void InitializeEngine()
+        {
+            if (!Loaded)
+                throw new InvalidOperationException("IronPython assemblies not loaded. Script engine not available.");
+
+            _python = IronPythonAssembly.GetType("IronPython.Hosting.Python");
+            _scriptEngine = MicrosoftScriptingAssembly.GetType("Microsoft.Scripting.Hosting.ScriptEngine");
+            _scriptScope = MicrosoftScriptingAssembly.GetType("Microsoft.Scripting.Hosting.ScriptScope");
+            _scriptRuntime = MicrosoftScriptingAssembly.GetType("Microsoft.Scripting.Hosting.ScriptRuntime");
+            _scriptSource = MicrosoftScriptingAssembly.GetType("Microsoft.Scripting.Hosting.ScriptSource");
+            _compiledCode = MicrosoftScriptingAssembly.GetType("Microsoft.Scripting.Hosting.CompiledCode");
+            _exceptionOperations = MicrosoftScriptingAssembly.GetType("Microsoft.Scripting.Hosting.ExceptionOperations");
+
+            _executeMethod = _scriptEngine.GetMethods()
+                .Single(method =>
+                    method.Name == "Execute" && !method.IsGenericMethod &&
+                    method.GetParameters().Count() == 2 &&
+                    method.GetParameters()[0].ParameterType == typeof(string) &&
+                    method.GetParameters()[1].ParameterType == _scriptScope);
+            _getVariableMethod = _scriptScope.GetMethod("GetVariable", new[] {typeof(string)});
+            _setVariableMethod = _scriptScope.GetMethod("SetVariable", new[] {typeof(string), typeof(object)});
+            _containsVariableMethod = _scriptScope.GetMethod("ContainsVariable", new[] {typeof(string)});
+
+            Engine = _python.GetMethods()
+                .Single(method =>
+                    method.Name == "CreateEngine" &&
+                    method.GetParameters().Count() == 0)
+                .Invoke(null, null);
+
+            // Add search path
+            var paths = _scriptEngine.GetMethod("GetSearchPaths").Invoke(Engine, null) as ICollection<string>;
+            paths.Add(Application.dataPath + "/Scripts/");
+            _scriptEngine.GetMethod("SetSearchPaths").Invoke(Engine, new object[] {paths});
+        }
+
+        /// <summary>
+        ///     Destroys IronPython engine.
+        /// </summary>
+        public static void DestroyEngine()
+        {
+            if (Engine != null)
+            {
+                var runtime = _scriptEngine.GetProperty("Runtime").GetValue(Engine, null);
+                _scriptRuntime.GetMethod("Shutdown").Invoke(runtime, null);
+            }
+            Engine = null;
+            _eo = null;
+        }
+
+        /// <summary>
+        ///     Wrapper for ScriptScope.GetVariableNames()
+        /// </summary>
+        /// <returns>Returns a list of all variable names in scope.</returns>
+        public IEnumerable<string> GetVariableNames()
+        {
+            return (IEnumerable<string>) _scriptScope.GetMethods()
+                .Single(m => m.Name == "GetVariableNames")
+                .Invoke(_scope, null);
+        }
+
+        /// <summary>
+        ///     Returns true if the scope contains variable with name.
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
+        public bool Contains(string name)
+        {
+            return (bool) _containsVariableMethod.Invoke(_scope, new object[] {name});
+        }
+
+        /// <summary>
+        ///     Returns variable with given name of type T.
+        /// </summary>
+        /// <param name="name">Name of the variable.</param>
+        /// <returns>Object of type T.</returns>
         public T GetVariable<T>(string name)
         {
-            var method = scriptScope.GetMethods()
+            var method = _scriptScope.GetMethods()
                 .Single(m =>
                     m.Name == "GetVariable" &&
                     m.IsGenericMethod &&
@@ -201,201 +278,105 @@ namespace LenchScripter
                     m.GetParameters()[0].ParameterType == typeof(string))
                 .MakeGenericMethod(typeof(T));
 
-            return (T)method.Invoke(scope, new[] { name });
+            return (T)method.Invoke(_scope, new object[] { name });
         }
 
         /// <summary>
-        /// Sets the value of the variable with given name in current scope.
+        ///     Access global variables by their name.
         /// </summary>
-        /// <param name="name">Name of the variable.</param>
-        /// <param name="value">Value of the variable.</param>
-        public void SetVariable(string name, object value)
+        /// <param name="key">Variable name</param>
+        public object this[string key]
         {
-            setVariableMethod.Invoke(scope, new[] { name, value });
+            get
+            {
+                return _getVariableMethod.Invoke(_scope, new object[] { key });
+            }
+            set
+            {
+                _setVariableMethod.Invoke(_scope, new[] { key, value });
+            }
         }
 
         /// <summary>
-        /// Compiles and executes code from string.
+        ///     Compiles and executes code from string.
         /// </summary>
-        /// <param name="code"></param>
-        public bool LoadCode(string code)
+        /// <param name="code">Complete Python script.</param>
+        public void LoadCode(string code)
         {
-            try
-            {
-                var source = scriptEngine.GetMethod("CreateScriptSourceFromString", new[] { typeof(string) }).Invoke(_engine, new [] { code });
-                var compiled = scriptSource.GetMethods().
-                    FirstOrDefault(method =>
-                        method.Name == "Compile" &&
-                        method.GetParameters().Count() == 0)
-                    .Invoke(source, null);
-                compiledCode.GetMethods()
-                    .FirstOrDefault(method =>
-                        method.Name == "Execute" &&
-                        method.GetParameters().Count() == 1 &&
-                        method.GetParameters()[0].ParameterType == scriptScope)
-                    .Invoke(compiled, new[] { scope });
-                GetFunctions();
-                return true;
-            }
-            catch (Exception e)
-            {
-                exception = e;
-                update = null;
-                fixedupdate = null;
-                return false;
-            }
+            var source = _scriptEngine.GetMethod("CreateScriptSourceFromString", new[] {typeof(string)})
+                .Invoke(Engine, new object[] {code});
+            var compiled = _scriptSource.GetMethods().
+                FirstOrDefault(method =>
+                    method.Name == "Compile" &&
+                    method.GetParameters().Count() == 0)
+                .Invoke(source, null);
+            _compiledCode.GetMethods()
+                .FirstOrDefault(method =>
+                    method.Name == "Execute" &&
+                    method.GetParameters().Count() == 1 &&
+                    method.GetParameters()[0].ParameterType == _scriptScope)
+                .Invoke(compiled, new[] {_scope});
         }
 
         /// <summary>
-        /// Compiles and executes code from file.
+        ///     Compiles and executes code from file.
         /// </summary>
-        /// <param name="path"></param>
-        public bool LoadScript(string path)
+        /// <param name="path">Path to a Python script.</param>
+        public void LoadScript(string path)
         {
-            try
-            {
-                var source = scriptEngine.GetMethod("CreateScriptSourceFromFile", new[] { typeof(string) }).Invoke(_engine, new[] { path });
-                var compiled = scriptSource.GetMethods()
-                    .FirstOrDefault(method => 
-                        method.Name == "Compile" &&
-                        method.GetParameters().Count() == 0)
-                    .Invoke(source, null);
-                compiledCode.GetMethods()
-                    .FirstOrDefault(method => 
-                        method.Name == "Execute" &&
-                        method.GetParameters().Count() == 1 &&
-                        method.GetParameters()[0].ParameterType == scriptScope)
-                    .Invoke(compiled, new[] { scope });
-                GetFunctions();
-                return true;
-            }
-            catch (Exception e)
-            {
-                exception = e;
-                update = null;
-                fixedupdate = null;
-                return false;
-            }
+            var source = _scriptEngine.GetMethod("CreateScriptSourceFromFile", new[] {typeof(string)})
+                .Invoke(Engine, new object[] {path});
+            var compiled = _scriptSource.GetMethods()
+                .FirstOrDefault(method =>
+                    method.Name == "Compile" &&
+                    method.GetParameters().Count() == 0)
+                .Invoke(source, null);
+            _compiledCode.GetMethods()
+                .FirstOrDefault(method =>
+                    method.Name == "Execute" &&
+                    method.GetParameters().Count() == 1 &&
+                    method.GetParameters()[0].ParameterType == _scriptScope)
+                .Invoke(compiled, new[] {_scope});
         }
 
         /// <summary>
-        /// Compiles code into a function.
+        ///     Compiles code into a function.
         /// </summary>
         /// <param name="code">Python code.</param>
         /// <returns>Function that returns</returns>
         public Func<object> Compile(string code)
         {
-            var source = scriptEngine.GetMethod("CreateScriptSourceFromString", new[] { typeof(string) }).Invoke(_engine, new[] { code });
-            var compiled = scriptSource.GetMethods().
+            var source = _scriptEngine.GetMethod("CreateScriptSourceFromString", new[] {typeof(string)})
+                .Invoke(Engine, new object[] {code});
+            var compiled = _scriptSource.GetMethods().
                 FirstOrDefault(method =>
                     method.Name == "Compile" &&
                     method.GetParameters().Count() == 0)
                 .Invoke(source, null);
-            var execute = compiledCode.GetMethods()
+            var execute = _compiledCode.GetMethods()
                 .FirstOrDefault(method =>
                     method.Name == "Execute" &&
                     method.GetParameters().Count() == 1 &&
-                    method.GetParameters()[0].ParameterType == scriptScope);
-            return () => execute.Invoke(compiled, new[] { scope });
+                    method.GetParameters()[0].ParameterType == _scriptScope);
+            return () => execute.Invoke(compiled, new[] {_scope});
         }
 
         /// <summary>
-        /// Calls Python Update function.
-        /// Does nothing if currently loaded script has no Update function.
-        /// In case of exception stops execution and returns false.
-        /// </summary>
-        /// <returns></returns>
-        public bool CallUpdate()
-        {
-            try
-            {
-                update?.Invoke();
-                return true;
-            }
-            catch (Exception e)
-            {
-                exception = e;
-                update = null;
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Calls Python FixedUpdate function.
-        /// Does nothing if currently loaded script has no FixedUpdate function.
-        /// In case of exception stops execution and returns false.
-        /// </summary>
-        /// <returns></returns>
-        public bool CallFixedUpdate()
-        {
-            try
-            {
-                fixedupdate?.Invoke();
-                return true;
-            }
-            catch (Exception e)
-            {
-                exception = e;
-                fixedupdate = null;
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Evaluates Python expression and saves the result in an output parameter.
-        /// Returns true if expression was executed with no errors.
+        ///     Evaluates Python expression and returns result.
         /// </summary>
         /// <param name="expression">Python expression.</param>
-        /// <param name="result">Output variable.</param>
-        /// <returns>Successfull execution.</returns>
-        public bool Execute(string expression, out object result)
+        /// <returns>Value of the expression.</returns>
+        public object Execute(string expression)
         {
-            try
-            {
-                result = executeMethod.Invoke(_engine, new [] { expression, scope });
-                return true;
-            }
-            catch (Exception e)
-            {
-                exception = e;
-                result = null;
-                return false;
-            }
+            return _executeMethod.Invoke(Engine, new[] {expression, _scope});
         }
 
         /// <summary>
-        /// Evaluates Python expression.
-        /// Returns true if expression wa executed with no errors.
-        /// </summary>
-        /// <param name="expression">Python expression.</param>
-        /// <returns>Successfull execution.</returns>
-        public bool Execute(string expression)
-        {
-            try
-            {
-                executeMethod.Invoke(_engine, new[] { expression, scope });
-                return true;
-            }
-            catch (Exception e)
-            {
-                exception = e;
-                return false;
-            }
-        }
-
-        private void GetFunctions()
-        {
-            if (ContainsVariable("Update"))
-                update = GetVariable<Action>("Update");
-
-            if (ContainsVariable("FixedUpdate"))
-                fixedupdate = GetVariable<Action>("FixedUpdate");
-        }
-
-        /// <summary>
-        /// Used by the Python engine as standard output;
+        ///     Used by the Python engine as standard output.
+        ///     Not intended to be called.
         /// </summary>
         /// <param name="s">Message to be sent.</param>
+        // ReSharper disable once InconsistentNaming
         public void write(object s)
         {
             if (s.ToString().Trim().Length != 0)
