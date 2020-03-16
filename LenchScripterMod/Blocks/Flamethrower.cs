@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 
 namespace Lench.Scripter.Blocks
 {
@@ -13,11 +14,21 @@ namespace Lench.Scripter.Blocks
         private static readonly FieldInfo KeyHeld = typeof(FlamethrowerController).GetField("keyHeld",
             BindingFlags.NonPublic | BindingFlags.Instance);
 
+        private static readonly FieldInfo _timey = typeof(Flamethrower).GetField("timey", 
+            BindingFlags.NonPublic | BindingFlags.Instance);
+
+        private static readonly MethodInfo _FlameOn = typeof(Flamethrower).GetMethod("FlameOn",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+
+        private static readonly MethodInfo _Flame = typeof(Flamethrower).GetMethod("Flame",
+      BindingFlags.NonPublic | BindingFlags.Instance);
+
         private readonly FlamethrowerController _fc;
         private readonly MToggle _holdToFire;
         private bool _lastIgniteFlag;
         private bool _setIgniteFlag;
 
+       
         /// <summary>
         ///     Creates a Block handler.
         /// </summary>
@@ -26,6 +37,7 @@ namespace Lench.Scripter.Blocks
         {
             _fc = bb.GetComponent<FlamethrowerController>();
             _holdToFire = HoldFieldInfo.GetValue(_fc) as MToggle;
+
         }
 
         /// <summary>
@@ -33,8 +45,10 @@ namespace Lench.Scripter.Blocks
         /// </summary>
         public float RemainingTime
         {
-            get { return 10 - _fc.timey; }
-            set { _fc.timey = 10 - value; }
+            //get { return 10 - _fc.timey; }
+            //set { _fc.timey = 10 - value; }
+            get { return 10f - (float)_timey.GetValue(_fc); }
+            set { _timey.SetValue(_fc, 10f - value); }
         }
 
         /// <summary>
@@ -73,9 +87,11 @@ namespace Lench.Scripter.Blocks
             {
                 if (!_fc.timeOut || StatMaster.GodTools.InfiniteAmmoMode)
                     if (_holdToFire.IsActive)
-                        _fc.FlameOn();
+                        //_fc.FlameOn();
+                        _FlameOn.Invoke(_fc, null);
                     else
-                        _fc.Flame();
+                        //_fc.Flame();
+                        _Flame.Invoke(_fc, null);
                 _setIgniteFlag = false;
                 _lastIgniteFlag = true;
             }

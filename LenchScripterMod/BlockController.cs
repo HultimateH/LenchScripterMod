@@ -200,13 +200,20 @@ namespace Lench.Scripter
         {
             var typeCount = new Dictionary<string, int>();
             BuildingBlocks = new Dictionary<Guid, string>();
+            Debug.Log("1");
             foreach (var t in /*ReferenceMaster*/Machine.Active().BuildingBlocks)
             {
+                Debug.Log("2");
                 var block = t.GetComponent</*GenericBlock*/BlockBehaviour>();
-                var name = t.GetComponent<MyBlockInfo>().blockName.ToUpper();
+                Debug.Log("block:" + block == null);
+                //var name = t.GetComponent<MyBlockInfo>().blockName.ToUpper();
+                var name = t.GetComponent<BasicInfo>().transform.name.ToUpper();
+                Debug.Log("name:" + name == null);
                 typeCount[name] = typeCount.ContainsKey(name) ? typeCount[name] + 1 : 1;
                 BuildingBlocks[block.Guid] = name + " " + typeCount[name];
+                Debug.Log("3");
             }
+            Debug.Log("4");
             _rebuildIDs = false;
         }
 
@@ -224,7 +231,8 @@ namespace Lench.Scripter
             var typeCount = new Dictionary<string, int>();
             for (var i = 0; i < /*ReferenceMaster*/Machine.Active().BuildingBlocks.Count; i++)
             {
-                var name = /*ReferenceMaster*/Machine.Active().BuildingBlocks[i].GetComponent<MyBlockInfo>().blockName.ToUpper();
+                //var name = /*ReferenceMaster*/Machine.Active().BuildingBlocks[i].GetComponent<MyBlockInfo>().blockName.ToUpper();
+                var name = /*ReferenceMaster*/Machine.Active().BuildingBlocks[i].GetComponent<BasicInfo>().transform.name.ToUpper();
                 typeCount[name] = typeCount.ContainsKey(name) ? typeCount[name] + 1 : 1;
                 var id = name + " " + typeCount[name];
                 var guid = /*ReferenceMaster*/Machine.Active().BuildingBlocks[i].Guid;
@@ -239,7 +247,7 @@ namespace Lench.Scripter
 
         private static IEnumerator WaitAndInitialize()
         {
-            while (!Game.IsSimulating || ReferenceMaster.SimulationBlocks.Count < ReferenceMaster.BuildingBlocks.Count)
+            while (!Game.IsSimulating || /*ReferenceMaster.SimulationBlocks.Count < ReferenceMaster.BuildingBlocks.Count*/Machine.Active().SimulationBlocks.Count< Machine.Active().BuildingBlocks.Count)
                 yield return null;
             Initialize();
         }

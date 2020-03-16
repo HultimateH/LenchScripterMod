@@ -40,8 +40,10 @@ namespace Lench.Scripter
         /// </summary>
         public string BlockName
         {
-            get { return Bb.GetComponent<MyBlockInfo>().blockName; }
-            set { Bb.GetComponent<MyBlockInfo>().blockName = value; }
+            //get { return Bb.GetComponent<MyBlockInfo>().blockName; }
+            //set { Bb.GetComponent<MyBlockInfo>().blockName = value; }
+            get { return Bb.GetComponent<BasicInfo>().transform.name; }
+            set { Bb.GetComponent<BasicInfo>().transform.name = value; }
         }
 
         /// <summary>

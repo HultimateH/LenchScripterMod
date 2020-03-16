@@ -40,7 +40,8 @@
         /// </summary>
         public void Detonate()
         {
-            _cb.StartCoroutine_Auto(_cb.Explode());
+            //_cb.StartCoroutine_Auto(_cb.Explode());
+            _cb.ExplodeMessage();
         }
     }
 }

@@ -117,7 +117,8 @@ namespace Lench.Scripter.Internal
                     _component = Mod.Controller.AddComponent<ScriptComponent>();
 
                     if (verbose)
-                        ModConsole.AddMessage(LogType.Log, $"[LenchScripterMod]: {Python.Execute("sys.version")}");
+                        //ModConsole.AddMessage(LogType.Log, $"[LenchScripterMod]: {Python.Execute("sys.version")}");
+                        ModConsole.Log($"[LenchScripterMod]: {Python.Execute("sys.version")}");
 
                     Mod.LoadedScripter = true;
                 }
@@ -125,7 +126,8 @@ namespace Lench.Scripter.Internal
                 {
                     if (verbose)
                     {
-                        ModConsole.AddMessage(LogType.Log, "[LenchScripterMod]: Error while initializing python engine:", e.ToString());
+                        //ModConsole.AddMessage(LogType.Log, "[LenchScripterMod]: Error while initializing python engine:", e.ToString());
+                        ModConsole.Log("[LenchScripterMod]: Error while initializing python engine: " + e.ToString());
                     }
                     Mod.LoadedScripter = false;
                 }

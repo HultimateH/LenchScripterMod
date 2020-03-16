@@ -11,6 +11,7 @@ using Configuration = Lench.Scripter.Internal.Configuration;
 using MachineData = Lench.Scripter.Internal.MachineData;
 using Object = UnityEngine.Object;
 using Modding;
+using PluginManager.Plugin;
 // ReSharper disable UnusedMember.Local
 
 namespace Lench.Scripter
@@ -18,7 +19,8 @@ namespace Lench.Scripter
     /// <summary>
     ///     Mod class loaded by the Mod Loader.
     /// </summary>
-    public class Mod : ModEntryPoint
+    [OnGameInit]
+    public class Mod :MonoBehaviour
     {
         /// <summary>
         ///     Is LenchScripterMod Block API loaded.
@@ -47,7 +49,7 @@ namespace Lench.Scripter
         ///     Instantiates the mod and it's components.
         ///     Looks for and loads assemblies.
         /// </summary>
-        public override void OnLoad()
+        public /*override*/ void /*OnLoad()*/Awake()
         {
             Events.OnSimulationToggle += Block.OnSimulationToggle;
             Events.OnSimulationToggle += Script.OnSimulationToggle;
@@ -67,6 +69,7 @@ namespace Lench.Scripter
 
             Controller = new GameObject("LenchScripterMod") { hideFlags = HideFlags.DontSave };
             Controller.AddComponent<ModController>();
+            Object.DontDestroyOnLoad(Controller);
 
             IdentifierDisplayWindow = new IdentifierDisplayWindow();
             ScriptOptionsWindow = new ScriptOptionsWindow();
@@ -232,6 +235,8 @@ namespace Lench.Scripter
         {
             private void Start()
             {
+                Debug.Log("script mod");
+                
                 if (Script.LoadEngine(true)) return;
 
                 Debug.Log("[LenchScripterMod]: Additional assets required.\n" +

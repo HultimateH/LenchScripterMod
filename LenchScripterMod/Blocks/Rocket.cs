@@ -67,7 +67,8 @@ namespace Lench.Scripter.Blocks
         {
             if (_tr.hasFired) return;
             _tr.hasFired = true;
-            _tr.StartCoroutine(_tr.Fire(0));
+            //_tr.StartCoroutine(_tr.Fire(0));
+            _tr.Fire(0);
         }
     }
 }
