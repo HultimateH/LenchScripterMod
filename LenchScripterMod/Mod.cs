@@ -49,7 +49,7 @@ namespace Lench.Scripter
         ///     Instantiates the mod and it's components.
         ///     Looks for and loads assemblies.
         /// </summary>
-        public /*override*/ void /*OnLoad()*/Awake()
+        public /*override*/ void /*OnLoad()*/Start()
         {
             Events.OnSimulationToggle += Block.OnSimulationToggle;
             Events.OnSimulationToggle += Script.OnSimulationToggle;

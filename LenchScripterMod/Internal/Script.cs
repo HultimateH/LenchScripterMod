@@ -25,6 +25,7 @@ namespace Lench.Scripter.Internal
 
         // Python environment
         public static PythonEnvironment Python;
+        private static Action _start;
         private static Action _update;
         private static Action _fixedUpdate;
 
@@ -235,7 +236,7 @@ namespace Lench.Scripter.Internal
         public static void Start()
         {
             if (!Enabled || !Mod.LoadedScripter) return;
-
+      
             try
             {
                 switch (Source)
@@ -249,6 +250,8 @@ namespace Lench.Scripter.Internal
                     default:
                         return;
                 }
+                if(Python.Contains("Start"))
+                    _start = Python.GetVariable<Action>("Start");
                 if (Python.Contains("Update"))
                     _update = Python.GetVariable<Action>("Update");
                 if (Python.Contains("FixedUpdate"))
@@ -288,8 +291,26 @@ namespace Lench.Scripter.Internal
         // ReSharper disable once ClassNeverInstantiated.Local
         private class ScriptComponent : MonoBehaviour
         {
+            private void OnEnable()
+            {
+                // Call script start.
+                try
+                {
+                    _start?.Invoke();
+                }
+                catch (Exception e)
+                {
+                    Error(e);
+                }
+            }
             private void Update()
             {
+                if (Input.GetKeyDown(KeyCode.I))
+                {
+                    Debug.Log(Enabled);
+                    Enabled = true;
+                }
+      
                 // Call script update.
                 try
                 {
@@ -300,7 +321,6 @@ namespace Lench.Scripter.Internal
                     Error(e);
                 }
             }
-
             private void FixedUpdate()
             {
                 // Call script fixed update.
@@ -313,6 +333,7 @@ namespace Lench.Scripter.Internal
                     Error(e);
                 }
             }
+
         }
     }
 }

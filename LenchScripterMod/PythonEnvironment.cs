@@ -158,11 +158,15 @@ namespace Lench.Scripter
                 Assembly.LoadFile(LibPath + "IronPython.Modules.dll");
                 Assembly.LoadFile(LibPath + "Microsoft.Scripting.Core.dll");
 
+                Debug.Log("true");
+
                 return true;
             }
             catch
             {
+                Debug.Log("false");
                 return false;
+               
             }
         }
 
