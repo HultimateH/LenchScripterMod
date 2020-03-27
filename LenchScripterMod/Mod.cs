@@ -136,24 +136,6 @@ namespace Lench.Scripter
                         Text="",
                         OnClick = OpenSettings
                     },
-                    new Toolbar.Button
-                    {
-                        Style = new GUIStyle()
-                        {
-                            ////normal = { background = Images.ButtonEnableOff },
-                            //focused = { background = Images.ButtonEnableFocus },
-                            //hover = { background = Images.ButtonEnableHover },
-                            //active = { background = Images.ButtonEnableActive },
-                                              normal = { background = Images.ButtonSettingsNormal },
-                            focused = { background = Images.ButtonSettingsFocus },
-                            hover = { background = Images.ButtonSettingsHover },
-                            active = { background = Images.ButtonSettingsActive },
-                            fixedWidth = 32,
-                            fixedHeight = 32
-                        },
-                        Text="",
-                        OnClick = OpenEnable
-                    }
                 }
             };
 
@@ -249,11 +231,7 @@ namespace Lench.Scripter
         {
             ScriptOptionsWindow.Visible = true;
         }
-        private static void OpenEnable()
-        {
-            Script.Enabled = !Script.Enabled;
-            Toolbar.Buttons[4].Style.normal.background = Script.Enabled ? Images.ButtonEnableOn : Images.ButtonEnableOff;
-        }
+
         internal class ModController : MonoBehaviour
         {
             private void Start()

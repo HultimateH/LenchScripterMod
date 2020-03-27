@@ -133,6 +133,12 @@ namespace Lench.Scripter.UI
                     Application.OpenURL(dir);
                 }
 
+                if (GUILayout.Button("Script Enabled", Script.Enabled? Elements.Buttons.Default:Elements.Buttons.Disabled))
+                {
+                    Script.Enabled = !Script.Enabled;
+                }
+      
+
                 // Draw script source
                 GUILayout.Label(" ", Elements.Labels.Title);
                 GUILayout.Label("Script source", Elements.Labels.Title);
