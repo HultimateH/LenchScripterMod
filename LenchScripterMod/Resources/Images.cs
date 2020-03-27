@@ -56,5 +56,11 @@ namespace Lench.Scripter.Resources
         public static Texture2D ButtonSettingsFocus => GetImage("button_settings_focus.png", 64, 64);
         public static Texture2D ButtonSettingsHover => GetImage("button_settings_hover.png", 64, 64);
         public static Texture2D ButtonSettingsActive => GetImage("button_settings_active.png", 64, 64);
+
+        public static Texture2D ButtonEnableOn => GetImage("button_enable_on.png", 64, 64);
+        public static Texture2D ButtonEnableOff => GetImage("button_enable_off.png", 64, 64);
+        public static Texture2D ButtonEnableFocus => GetImage("button_enable_focus.png", 64, 64);
+        public static Texture2D ButtonEnableHover => GetImage("button_enable_hover.png", 64, 64);
+        public static Texture2D ButtonEnableActive => GetImage("button_enable_active.png", 64, 64);
     }
 }
