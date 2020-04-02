@@ -305,12 +305,6 @@ namespace Lench.Scripter.Internal
             }
             private void Update()
             {
-                if (Input.GetKeyDown(KeyCode.I))
-                {
-                    Debug.Log(Enabled);
-                    Enabled = true;
-                }
-      
                 // Call script update.
                 try
                 {

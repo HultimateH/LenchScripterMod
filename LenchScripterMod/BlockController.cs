@@ -200,20 +200,15 @@ namespace Lench.Scripter
         {
             var typeCount = new Dictionary<string, int>();
             BuildingBlocks = new Dictionary<Guid, string>();
-            Debug.Log("1");
+
             foreach (var t in /*ReferenceMaster*/Machine.Active().BuildingBlocks)
             {
-                Debug.Log("2");
                 var block = t.GetComponent</*GenericBlock*/BlockBehaviour>();
-                Debug.Log("block:" + block == null);
                 //var name = t.GetComponent<MyBlockInfo>().blockName.ToUpper();
                 var name = t.GetComponent<BasicInfo>().transform.name.ToUpper();
-                Debug.Log("name:" + name == null);
                 typeCount[name] = typeCount.ContainsKey(name) ? typeCount[name] + 1 : 1;
                 BuildingBlocks[block.Guid] = name + " " + typeCount[name];
-                Debug.Log("3");
             }
-            Debug.Log("4");
             _rebuildIDs = false;
         }
 
